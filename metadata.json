@@ -1,0 +1,5 @@
+{
+  "name": "Document Control System",
+  "description": "A web application to manage and control documents and records, inspired by ISO 9001 standards. It allows users to search, filter, and view a master list of all official documents within an organization.",
+  "requestFramePermissions": []
+}
