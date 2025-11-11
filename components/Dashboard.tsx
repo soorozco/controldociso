@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Documento } from '../types';
 
@@ -16,6 +17,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ documents }) => {
     const stats = useMemo(() => {
         const totalDocs = documents.length;
         const vigente = documents.filter(d => d.estado === 'Vigente').length;
+        // FIX: Corrected typo 'Obsoletos' to 'Obsoleto' to match the type definition.
         const obsoleto = documents.filter(d => d.estado === 'Obsoleto').length;
         const areas = [...new Set(documents.map(d => d.area))].length;
         const docTypes = [...new Set(documents.map(d => d.tipoDocumento))].length;
@@ -24,13 +26,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ documents }) => {
     }, [documents]);
 
     const docsByArea = useMemo(() => {
-        // FIX: By explicitly typing the initial value for `reduce`, we ensure TypeScript correctly
-        // infers the return type of `docsByArea` as `Record<string, number>`. This resolves a
-        // type error in the sort function below, which requires numeric values for comparison.
-        return documents.reduce<Record<string, number>>((acc, doc) => {
+        // FIX: Explicitly type the accumulator and initial value of reduce to ensure docsByArea is correctly typed as Record<string, number>. This fixes the sort comparison error.
+        return documents.reduce((acc: Record<string, number>, doc) => {
             acc[doc.area] = (acc[doc.area] || 0) + 1;
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
     }, [documents]);
 
     return (
@@ -48,7 +48,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ documents }) => {
                 <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Documentos por Área</h3>
                 <div className="mt-4">
                     <ul>
-                        {/* FIX: Changed sort to be more type-safe and avoid inference issues. */}
+                        {/* FIX: The type annotation on `docsByArea` ensures `b[1]` and `a[1]` are numbers. */}
                         {Object.entries(docsByArea).sort((a, b) => b[1] - a[1]).map(([area, count]) => (
                             <li key={area} className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
                                <span className="text-sm font-medium">{area}</span>

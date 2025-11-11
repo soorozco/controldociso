@@ -6,7 +6,7 @@ interface ChangeMatrixProps {
 }
 
 export const ChangeMatrix: React.FC<ChangeMatrixProps> = ({ documents }) => {
-  const documentsWithChanges = documents.filter(d => d.cambios && d.cambios.length > 0);
+  const documentsWithChanges = documents.filter(d => d.controlCambios && d.controlCambios.length > 0);
 
   return (
     <div className="mt-6 flow-root">
@@ -25,17 +25,17 @@ export const ChangeMatrix: React.FC<ChangeMatrixProps> = ({ documents }) => {
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
                             {documentsWithChanges.flatMap((doc) => 
-                                doc.cambios!.sort((a,b) => b.version - a.version).map((cambio, index) => (
-                                    <tr key={`${doc.id}-${cambio.version}`}>
+                                doc.controlCambios!.sort((a,b) => parseInt(b.Numero, 10) - parseInt(a.Numero, 10)).map((cambio, index) => (
+                                    <tr key={`${doc.id}-${cambio.Numero}`}>
                                         {index === 0 && (
-                                            <td rowSpan={doc.cambios!.length} className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-100 font-medium align-top border-r dark:border-gray-600">
+                                            <td rowSpan={doc.controlCambios!.length} className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-100 font-medium align-top border-r dark:border-gray-600">
                                                 <div className='font-bold'>{doc.codigo}</div>
                                                 <div>{doc.nombre}</div>
                                             </td>
                                         )}
-                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300 text-center">{cambio.version}</td>
-                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300">{cambio.fecha}</td>
-                                        <td className="whitespace-normal px-3 py-4 text-sm text-gray-500 dark:text-gray-300">{cambio.descripcion}</td>
+                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300 text-center">{cambio.Numero}</td>
+                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300">{cambio.Fecha}</td>
+                                        <td className="whitespace-normal px-3 py-4 text-sm text-gray-500 dark:text-gray-300">{cambio['Descripcion del Cambio']}</td>
                                     </tr>
                                 ))
                             )}

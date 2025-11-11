@@ -1,12 +1,19 @@
 
+
+
 import React, { useState } from 'react';
-import { Documento, Formato, JsonImportData, AccionCorrectiva, Revision } from './types';
-import { initialDocuments, initialFormats, initialAcciones, initialRevisiones } from './data/documents';
-import { Header } from './components/Header';
-import { Sidebar } from './components/Sidebar';
+import { Documento, Formato, JsonImportData, AccionCorrectiva, Revision, IndicadorCategoria, DocumentoExterno, Auditoria, HallazgoAuditoria, Oficio } from './types';
+import { initialDocuments, initialFormats, initialAcciones, initialRevisiones, initialDocumentosExternos, initialOficios } from './data/documents';
+import { initialIndicadores } from './data/indicadores';
+import { initialAuditorias } from './data/audits';
+import { TopNavBar } from './components/TopNavBar';
 import { GestorDocumentalPage } from './components/GestorDocumentalPage';
 import { AccionesCorrectivasPage } from './components/AccionesCorrectivasPage';
 import { RevisionesPage } from './components/RevisionesPage';
+import { IndicadoresPage } from './components/IndicadoresPage';
+import { AuditoriasPage } from './components/AuditoriasPage';
+import { HerramientasPage } from './components/HerramientasPage';
+import { OficiosPage } from './components/OficiosPage';
 
 
 const App: React.FC = () => {
@@ -14,6 +21,10 @@ const App: React.FC = () => {
     const [formats, setFormats] = useState<Formato[]>(initialFormats);
     const [acciones, setAcciones] = useState<AccionCorrectiva[]>(initialAcciones);
     const [revisiones, setRevisiones] = useState<Revision[]>(initialRevisiones);
+    const [indicadores, setIndicadores] = useState<IndicadorCategoria[]>(initialIndicadores);
+    const [documentosExternos, setDocumentosExternos] = useState<DocumentoExterno[]>(initialDocumentosExternos);
+    const [auditorias, setAuditorias] = useState<Auditoria[]>(initialAuditorias);
+    const [oficios, setOficios] = useState<Oficio[]>(initialOficios);
     
     const [currentPage, setCurrentPage] = useState('Gestor Documental');
 
@@ -22,11 +33,27 @@ const App: React.FC = () => {
         if (data.formatos) setFormats(prev => [...prev, ...data.formatos!]);
         if (data.accionesCorrectivas) setAcciones(prev => [...prev, ...data.accionesCorrectivas!]);
         if (data.revisiones) setRevisiones(prev => [...prev, ...data.revisiones!]);
+        if (data.documentosExternos) setDocumentosExternos(prev => [...prev, ...data.documentosExternos!]);
+        if (data.auditorias) setAuditorias(prev => [...prev, ...data.auditorias!]);
+        if (data.indicadores) setIndicadores(prev => [...prev, ...data.indicadores!]);
+        if (data.oficios) setOficios(prev => [...prev, ...data.oficios!]); // Handle imported oficios
         alert('Datos importados correctamente!');
     };
 
     const handleSaveDocument = (docToSave: Documento) => {
         setDocuments(docs => {
+            const index = docs.findIndex(d => d.id === docToSave.id);
+            if (index > -1) {
+                const newDocs = [...docs];
+                newDocs[index] = docToSave;
+                return newDocs;
+            }
+            return [...docs, docToSave];
+        });
+    };
+    
+    const handleSaveDocumentoExterno = (docToSave: DocumentoExterno) => {
+        setDocumentosExternos(docs => {
             const index = docs.findIndex(d => d.id === docToSave.id);
             if (index > -1) {
                 const newDocs = [...docs];
@@ -73,30 +100,140 @@ const App: React.FC = () => {
         });
     };
     
+    const handleSaveAuditoria = (auditoriaToSave: Auditoria) => {
+        setAuditorias(auds => {
+            const index = auds.findIndex(a => a.id === auditoriaToSave.id);
+            if (index > -1) {
+                const newAuds = [...auds];
+                newAuds[index] = auditoriaToSave;
+                return newAuds;
+            }
+            return [...auds, auditoriaToSave];
+        });
+    };
+
+    const handleGenerateAccionFromHallazgo = (hallazgo: HallazgoAuditoria, auditoriaId: string) => {
+        const newAccion: AccionCorrectiva = {
+            id: `ac-${Date.now()}`,
+            codigo: `AC-${new Date().getFullYear()}-${String(acciones.length + 1).padStart(3, '0')}`,
+            descripcion: `Derivada de auditoría (Hallazgo: ${hallazgo.id}): ${hallazgo.descripcion}`,
+            causaRaiz: '',
+            acciones: [],
+            responsableApertura: hallazgo.auditorResponsable,
+            fechaApertura: new Date().toISOString().split('T')[0],
+            estado: 'Abierta',
+        };
+
+        handleSaveAccion(newAccion);
+
+        // Link the hallazgo to the new accion
+        const updatedHallazgo = { ...hallazgo, accionCorrectivaId: newAccion.id };
+        const auditoria = auditorias.find(a => a.id === auditoriaId);
+        if (auditoria) {
+            const updatedAuditoria = {
+                ...auditoria,
+                hallazgos: auditoria.hallazgos.map(h => h.id === hallazgo.id ? updatedHallazgo : h)
+            };
+            handleSaveAuditoria(updatedAuditoria);
+        }
+        
+        alert(`Acción Correctiva ${newAccion.codigo} generada.`);
+    };
+
+    const handleSaveIndicadores = (categoriaId: string, indicadorId: string, newRegistros: any[]) => {
+        setIndicadores(prev => {
+            return prev.map(cat => {
+                if (cat.id === categoriaId) {
+                    return {
+                        ...cat,
+                        indicadores: cat.indicadores.map(ind => {
+                            if (ind.id === indicadorId) {
+                                return { ...ind, registros: newRegistros };
+                            }
+                            return ind;
+                        })
+                    };
+                }
+                return cat;
+            });
+        });
+    };
+
+    const handleSaveOficio = (oficioToSave: Oficio) => {
+        setOficios(prev => {
+            const index = prev.findIndex(o => o.id === oficioToSave.id);
+            if (index > -1) {
+                const newOficios = [...prev];
+                newOficios[index] = oficioToSave;
+                return newOficios;
+            }
+            return [...prev, oficioToSave];
+        });
+    };
+    
     const renderPage = () => {
         switch (currentPage) {
             case 'Gestor Documental':
-                return <GestorDocumentalPage documents={documents} formats={formats} onSaveDocument={handleSaveDocument} onSaveFormat={handleSaveFormat} />;
+                return <GestorDocumentalPage 
+                            documents={documents} 
+                            formats={formats} 
+                            documentosExternos={documentosExternos}
+                            onSaveDocument={handleSaveDocument} 
+                            onSaveFormat={handleSaveFormat} 
+                            onSaveDocumentoExterno={handleSaveDocumentoExterno}
+                        />;
             case 'Acciones Correctivas':
                 return <AccionesCorrectivasPage acciones={acciones} onSave={handleSaveAccion} />;
             case 'Revisiones por la Dirección':
                 return <RevisionesPage revisiones={revisiones} onSave={handleSaveRevision} />;
+            case 'Indicadores':
+                return <IndicadoresPage categorias={indicadores} onSave={handleSaveIndicadores} />;
+            case 'Auditoría Interna':
+                return <AuditoriasPage 
+                            auditorias={auditorias} 
+                            onSave={handleSaveAuditoria} 
+                            onGenerateAccion={handleGenerateAccionFromHallazgo}
+                        />;
+            case 'Oficios':
+                return <OficiosPage 
+                            oficios={oficios}
+                            onSaveOficio={handleSaveOficio}
+                        />;
+            case 'Herramientas':
+                return <HerramientasPage
+                            onImport={handleImport}
+                            documents={documents}
+                            formats={formats}
+                            acciones={acciones}
+                            revisiones={revisiones}
+                            indicadores={indicadores}
+                            documentosExternos={documentosExternos}
+                            auditorias={auditorias}
+                            oficios={oficios} // Pass oficios for export
+                        />;
             default:
-                return <GestorDocumentalPage documents={documents} formats={formats} onSaveDocument={handleSaveDocument} onSaveFormat={handleSaveFormat} />;
+                 return <GestorDocumentalPage 
+                            documents={documents} 
+                            formats={formats} 
+                            documentosExternos={documentosExternos}
+                            onSaveDocument={handleSaveDocument} 
+                            onSaveFormat={handleSaveFormat} 
+                            onSaveDocumentoExterno={handleSaveDocumentoExterno}
+                        />;
         }
     };
 
     return (
-        <div className="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-            <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <Header onImport={handleImport} documents={documents} formats={formats} />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900">
-                    <div className="container mx-auto px-6 py-8">
-                        {renderPage()}
-                    </div>
-                </main>
-            </div>
+        <div className="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+            <TopNavBar 
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+            />
+            <main className="pt-16">
+                <div className="container mx-auto px-6 py-8">
+                    {renderPage()}
+                </div>
+            </main>
         </div>
     );
 };

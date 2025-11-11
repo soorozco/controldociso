@@ -1,14 +1,16 @@
-import React, { useState, useRef } from 'react';
-import { Documento, ProcesoPaso, ControlCambio, Autorizacion } from '../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { Documento, Formato, ProcesoPaso, ControlCambio, Autorizacion } from '../types';
 import { XIcon } from './icons/XIcon';
 import { PlusIcon } from './icons/PlusIcon';
 import { TrashIcon } from './icons/TrashIcon';
+import { areaCodes, docTypeCodes, getNextSequentialNumber } from '../data/codingRules';
 
 interface NewDocumentModalProps {
     onClose: () => void;
     onSave: (documento: Documento) => void;
     areas: string[];
     docTypes: string[];
+    allDocs: (Documento | Formato)[];
 }
 
 const emptyDocument: Omit<Documento, 'id'> = {
@@ -68,14 +70,71 @@ const parseDate = (dateString: string | undefined): string | undefined => {
     return undefined; // Indicate failure
 };
 
+const Section: React.FC<{title: string, children: React.ReactNode}> = ({title, children}) => (
+    <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{title}</h3>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            {children}
+        </div>
+    </div>
+);
 
-export const NewDocumentModal: React.FC<NewDocumentModalProps> = ({ onClose, onSave, areas, docTypes }) => {
+const FormField: React.FC<{
+    name: string;
+    label: string;
+    value: string;
+    onChange: (e: React.ChangeEvent<any>) => void;
+    type?: string;
+    required?: boolean;
+    as?: 'input' | 'textarea' | 'select';
+    rows?: number;
+    span?: 'full';
+    children?: React.ReactNode;
+}> = ({ name, label, as = 'input', span, children, ...props }) => (
+    <div className={span === 'full' ? "md:col-span-2" : ""}>
+        <label htmlFor={name} className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
+        {as === 'textarea' ? (
+            <textarea id={name} name={name} {...props} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+        ) : as === 'select' ? (
+             <select id={name} name={name} {...props} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                {children}
+            </select>
+        ) : (
+            <input id={name} name={name} {...props} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+        )}
+    </div>
+);
+
+
+export const NewDocumentModal: React.FC<NewDocumentModalProps> = ({ onClose, onSave, areas, docTypes, allDocs }) => {
     const [formData, setFormData] = useState<Documento>({ ...emptyDocument, id: `doc-${Date.now()}` });
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isCodeManuallyEdited, setIsCodeManuallyEdited] = useState(false);
+
+    useEffect(() => {
+        if (isCodeManuallyEdited || !formData.area || !formData.tipoDocumento) {
+            return;
+        }
+
+        const typeCode = docTypeCodes[formData.tipoDocumento];
+        const areaCode = areaCodes[formData.area];
+
+        if (typeCode && areaCode) {
+            const prefix = `${typeCode}-${areaCode}-`;
+            const nextNum = getNextSequentialNumber(prefix, allDocs);
+            setFormData(prev => ({...prev, codigo: `${prefix}${nextNum}`}));
+        }
+    }, [formData.area, formData.tipoDocumento, allDocs, isCodeManuallyEdited]);
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setIsCodeManuallyEdited(true);
+        handleChange(e);
     };
 
     const handleNestedChange = (section: keyof Documento, field: string, value: string) => {
@@ -125,56 +184,64 @@ export const NewDocumentModal: React.FC<NewDocumentModalProps> = ({ onClose, onS
                 const text = e.target?.result as string;
                 const data = JSON.parse(text);
 
-                let autorizacionesData: Autorizacion[] = formData.autorizaciones || [];
-                const authTable = data["Autorizaciones"]?.table;
-                if (authTable && authTable.length === 2 && authTable[0] && authTable[1]) {
-                    const names = authTable[0];
-                    const roles = authTable[1];
-                    autorizacionesData = [{
-                        Elaboro: names['Elaboró'] || '',
-                        Reviso: names['Revisó'] || '',
-                        Autorizo: names['Autorizó'] || '',
-                        CargoElaboro: roles['Cargo Elaboró'] || '',
-                        CargoReviso: roles['Cargo Revisó'] || '',
-                        CargoAutorizo: roles['Cargo Autorizó'] || '',
-                    }];
-                } else if (authTable?.length > 0) {
-                     autorizacionesData = authTable.map((auth: any) => ({
-                         Elaboro: auth.Elaboró || '', Reviso: auth.Revisó || '', Autorizo: auth.Autorizó || '',
-                         CargoElaboro: auth['Cargo Elaboró'] || '', CargoReviso: auth['Cargo Revisó'] || '', CargoAutorizo: auth['Cargo Autorizó'] || '',
-                    }));
+                const autorizacionesData: Autorizacion[] = [];
+                const authSource = data["Autorizaciones"];
+                if (authSource) {
+                    autorizacionesData.push({
+                        Elaboro: authSource['Elaboró'] || '',
+                        Reviso: authSource['Revisó'] || '',
+                        Autorizo: authSource['Autorizó'] || '',
+                        CargoElaboro: '', // Not in new format
+                        CargoReviso: '',  // Not in new format
+                        CargoAutorizo: '',// Not in new format
+                    });
                 }
 
-                const controlCambiosData = (data["Control de Cambios"]?.table || []).map((cambio: any) => ({
-                    Numero: cambio.Numero || '',
-                    Fecha: parseDate(cambio.Fecha) || cambio.Fecha, // Keep original if parse fails
-                    'Descripcion del Cambio': cambio['Descripción del Cambio'] || cambio['Descripcion del Cambio'] || '',
+                const controlCambiosData = (data["Control de Cambios"] || []).map((cambio: any) => ({
+                    Numero: String(cambio.Número || cambio.Numero || ''),
+                    Fecha: parseDate(cambio.Fecha) || cambio.Fecha,
+                    'Descripcion del Cambio': cambio['Descripción del cambio'] || cambio['Descripcion del cambio'] || '',
                     'Realizado por': cambio['Realizado por'] || '',
                     'Aprobado por': cambio['Aprobado por'] || '',
                 }));
 
+                const desarrolloProcesoData = (data["Desarrollo del Proceso"] || []).map((paso: any) => ({
+                    No: String(paso.No || ''),
+                    Responsable: paso.Responsable || '',
+                    Actividad: paso.Actividad || '',
+                }));
+
+                const documentosReferenciaData = (data["Documentos de Referencia"] || []).map((ref: any) => ({
+                    Nombre: ref.Nombre || '',
+                    Codigo: ref.Código || ref.Codigo || '',
+                }));
+                
+                const responsabilidadesSource = data["Responsabilidades"];
+
                 const newDocState: Documento = {
                     ...formData,
                     nombre: data["Nombre del Documento"] || formData.nombre,
-                    codigo: data["Código"] || formData.codigo,
+                    codigo: data["Código"] || data["Codigo"] || formData.codigo,
                     version: parseInt(data["Versión vigente"], 10) || formData.version,
                     fechaEmision: parseDate(data["Fecha de emisión"]) || formData.fechaEmision,
                     fechaRevision: parseDate(data["Fecha de revisión"]) || formData.fechaRevision,
-                    objetivo: data["Objetivo"] || formData.objetivo,
+                    fechaAprobacion: parseDate(data["Fecha de emisión"]) || formData.fechaAprobacion,
                     alcance: data["Alcance"] || formData.alcance,
-                    responsabilidades: data["Responsabilidades"] ? {
-                        Actualizacion: data.Responsabilidades['Actualización'] || data.Responsabilidades['Actualizacion'] || '',
-                        Ejecucion: data.Responsabilidades['Ejecución'] || data.Responsabilidades['Ejecucion'] || '',
-                        Supervision: data.Responsabilidades['Supervisión'] || data.Responsabilidades['Supervision'] || '',
+                    materialEquipo: data["Material y equipo"] || formData.materialEquipo,
+                    responsabilidades: responsabilidadesSource ? {
+                        Actualizacion: responsabilidadesSource['Actualización'] || responsabilidadesSource['Actualizacion'] || '',
+                        Ejecucion: responsabilidadesSource['Ejecución'] || responsabilidadesSource['Ejecucion'] || '',
+                        Supervision: responsabilidadesSource['Supervisión'] || responsabilidadesSource['Supervision'] || '',
                     } : formData.responsabilidades,
-                    desarrolloProceso: data["Desarrollo del Proceso"]?.table || formData.desarrolloProceso,
+                    desarrolloProceso: desarrolloProcesoData,
                     gestionRiesgos: data["Gestión de Riesgos"] ? {
-                        ponderacionRiesgos: data["Gestión de Riesgos"]["Ponderación de riesgos"] || [],
-                        barrerasSeguridad: data["Gestión de Riesgos"]["Barreras de seguridad"] || [],
+                        ponderacionRiesgos: data["Gestión de Riesgos"]["Ponderación de Riesgos"] || [],
+                        barrerasSeguridad: data["Gestión de Riesgos"]["Barreras de Seguridad"] || [],
                     } : formData.gestionRiesgos,
-                    documentosReferencia: data["Documentos de Referencia"]?.table || formData.documentosReferencia,
+                    documentosReferencia: documentosReferenciaData,
                     controlCambios: controlCambiosData,
-                    autorizaciones: autorizacionesData,
+                    autorizaciones: autorizacionesData.length > 0 ? autorizacionesData : formData.autorizaciones,
+                    objetivo: data["Objetivo"] || '',
                 };
                 setFormData(newDocState);
                 alert('Datos importados correctamente en el formulario.');
@@ -193,41 +260,6 @@ export const NewDocumentModal: React.FC<NewDocumentModalProps> = ({ onClose, onS
         onSave(formData);
     };
     
-    const Section: React.FC<{title: string, children: React.ReactNode}> = ({title, children}) => (
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{title}</h3>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                {children}
-            </div>
-        </div>
-    );
-    
-    const FormField: React.FC<{
-        name: string;
-        label: string;
-        value: string;
-        onChange: (e: React.ChangeEvent<any>) => void;
-        type?: string;
-        required?: boolean;
-        as?: 'input' | 'textarea' | 'select';
-        rows?: number;
-        span?: 'full';
-        children?: React.ReactNode;
-    }> = ({ name, label, as = 'input', span, children, ...props }) => (
-        <div className={span === 'full' ? "md:col-span-2" : ""}>
-            <label htmlFor={name} className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
-            {as === 'textarea' ? (
-                <textarea id={name} name={name} {...props} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
-            ) : as === 'select' ? (
-                 <select id={name} name={name} {...props} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    {children}
-                </select>
-            ) : (
-                <input id={name} name={name} {...props} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
-            )}
-        </div>
-    );
-
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
@@ -247,7 +279,7 @@ export const NewDocumentModal: React.FC<NewDocumentModalProps> = ({ onClose, onS
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                              <FormField name="nombre" label="Nombre del Documento" value={formData.nombre} onChange={handleChange} required />
-                             <FormField name="codigo" label="Código" value={formData.codigo} onChange={handleChange} required />
+                             <FormField name="codigo" label="Código" value={formData.codigo} onChange={handleCodeChange} required />
                              <FormField name="version" label="Versión" type="number" value={String(formData.version)} onChange={e => setFormData(p => ({...p, version: parseInt(e.target.value, 10) || 1}))} />
                              <FormField name="estado" label="Estado" value={formData.estado} onChange={handleChange} as="select">
                                 <option value="Vigente">Vigente</option>
@@ -257,11 +289,11 @@ export const NewDocumentModal: React.FC<NewDocumentModalProps> = ({ onClose, onS
                              <FormField name="fechaRevision" label="Fecha Revisión" type="date" value={formData.fechaRevision || ''} onChange={handleChange} />
                              <FormField name="area" label="Área" value={formData.area} onChange={handleChange} as="select">
                                 <option value="">Seleccionar área</option>
-                                {areas.map(a => <option key={a} value={a}>{a}</option>)}
+                                {Object.keys(areaCodes).map(a => <option key={a} value={a}>{a}</option>)}
                             </FormField>
                              <FormField name="tipoDocumento" label="Tipo Documento" value={formData.tipoDocumento} onChange={handleChange} as="select">
                                 <option value="">Seleccionar tipo</option>
-                                {docTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                                {Object.keys(docTypeCodes).map(t => <option key={t} value={t}>{t}</option>)}
                             </FormField>
                         </div>
 

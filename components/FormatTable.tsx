@@ -10,9 +10,10 @@ interface FormatTableProps {
     formats: Formato[];
     onSave: (formato: Formato) => void;
     documents: Documento[];
+    allDocs: (Documento | Formato)[];
 }
 
-export const FormatTable: React.FC<FormatTableProps> = ({ formats, onSave, documents }) => {
+export const FormatTable: React.FC<FormatTableProps> = ({ formats, onSave, documents, allDocs }) => {
     const {
         paginatedDocuments: paginatedFormats,
         areas,
@@ -111,6 +112,7 @@ export const FormatTable: React.FC<FormatTableProps> = ({ formats, onSave, docum
                     areas={areas}
                     docTypes={docTypes}
                     documentos={documents}
+                    allDocs={allDocs}
                 />
             )}
         </div>

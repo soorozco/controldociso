@@ -1,5 +1,5 @@
 import React from 'react';
-import { Documento, Formato, ProcesoPaso, ControlCambio, Autorizacion } from '../types';
+import { Documento, Formato, ProcesoPaso, ControlCambio, Autorizacion, DocumentoReferencia } from '../types';
 import { XIcon } from './icons/XIcon';
 import { DocumentTextIcon } from './icons/DocumentTextIcon';
 
@@ -97,6 +97,20 @@ export const ViewDocumentModal: React.FC<ViewDocumentModalProps> = ({ documento,
                                 </tbody>
                             </table>
                         </div>
+                    </Section>
+
+                    <Section title="Material y Equipo" hasData={!!documento.materialEquipo && documento.materialEquipo.length > 0}>
+                        <ul className="list-disc list-inside text-sm text-gray-700 dark:text-gray-300">
+                            {documento.materialEquipo?.map((item, index) => <li key={index}>{item}</li>)}
+                        </ul>
+                    </Section>
+
+                    <Section title="Documentos de Referencia" hasData={!!documento.documentosReferencia && documento.documentosReferencia.length > 0}>
+                        <ul className="list-disc list-inside text-sm text-gray-700 dark:text-gray-300">
+                            {documento.documentosReferencia?.map((ref, index) => (
+                                <li key={index}>{ref.Codigo} - {ref.Nombre}</li>
+                            ))}
+                        </ul>
                     </Section>
                     
                     <Section title="Control de Cambios" hasData={!!documento.controlCambios && documento.controlCambios.length > 0}>

@@ -1,5 +1,6 @@
 
-import { Documento, Formato, AccionCorrectiva, Revision } from '../types';
+
+import { Documento, Formato, AccionCorrectiva, Revision, DocumentoExterno, Oficio } from '../types';
 
 export const initialDocuments: Documento[] = [
   {
@@ -13,9 +14,9 @@ export const initialDocuments: Documento[] = [
     estado: 'Vigente',
     archivo: 'docs/PROC-001.pdf',
     relaciones: ['FORM-001', 'FORM-002'],
-    cambios: [
-      { version: 3, fecha: '2023-05-15', descripcion: 'Actualización según auditoría interna.' },
-      { version: 2, fecha: '2022-01-20', descripcion: 'Añadido control de formatos.' },
+    controlCambios: [
+      { Numero: '3', Fecha: '2023-05-15', 'Descripcion del Cambio': 'Actualización según auditoría interna.', 'Realizado por': 'Auditoría', 'Aprobado por': 'Gerencia Calidad' },
+      { Numero: '2', Fecha: '2022-01-20', 'Descripcion del Cambio': 'Añadido control de formatos.', 'Realizado por': 'Analista Calidad', 'Aprobado por': 'Gerencia Calidad' },
     ],
   },
   {
@@ -67,6 +68,49 @@ export const initialFormats: Formato[] = [
     archivo: 'forms/FORM-002.xlsx',
     documentoPadreCodigo: 'PROC-001',
   },
+];
+
+export const initialDocumentosExternos: DocumentoExterno[] = [
+  {
+    id: 'de-1',
+    codigo: 'DE-REG-01',
+    nombre: 'NOM-004-SSA3-2012, Del expediente clínico.',
+    tipoDocumento: 'Norma',
+    areaResponsable: 'Calidad',
+    fuenteEmisor: 'Secretaría de Salud (SSA)',
+    codigoEmisor: 'NOM-004-SSA3-2012',
+    fechaEmisionOriginal: '2012-10-15',
+    fechaRecepcionRegistro: '2018-01-20',
+    version: 'DOF 15/10/2012',
+    estado: 'Vigente',
+    periodicidadRevision: 'Cada 5 años o por actualización del DOF',
+    fechaUltimaRevisionInterna: '2023-11-10',
+    proximaRevisionProgramada: '2024-11-10',
+    ubicacion: 'Intranet SGC > Normatividad',
+    responsableCustodia: 'Jefatura de Calidad',
+    documentosRelacionados: ['PROC-005', 'PROC-008'],
+    observaciones: 'Norma fundamental para la gestión de todos los registros clínicos.',
+    fechaVerificacionVigencia: '2023-11-10',
+    evidenciaVerificacion: 'Consulta en sitio web del Diario Oficial de la Federación.',
+    validadoPor: 'Dr. A. Martinez (Director Médico)',
+  },
+  {
+    id: 'de-2',
+    codigo: 'DE-IB-05',
+    nombre: 'Manual de Operación y Mantenimiento - Bomba de Infusión Alaris PC',
+    tipoDocumento: 'Manual',
+    areaResponsable: 'Ingeniería Biomédica',
+    fuenteEmisor: 'Becton, Dickinson and Company (BD)',
+    codigoEmisor: 'BD-ALARIS-PC-MAN-OP-2021',
+    fechaEmisionOriginal: '2021-06-01',
+    fechaRecepcionRegistro: '2021-08-15',
+    version: 'Rev. C',
+    estado: 'Vigente',
+    periodicidadRevision: 'Cuando el fabricante notifique una actualización',
+    ubicacion: 'Archivo físico en taller de Biomédica y copia digital en servidor.',
+    responsableCustodia: 'Jefe de Ing. Biomédica',
+    validadoPor: 'Ing. R. Soto',
+  }
 ];
 
 export const initialAcciones: AccionCorrectiva[] = [
@@ -160,3 +204,82 @@ Acciones para tomar:
         oportunidadesMejoraAcciones: '',
     },
 ];
+
+export const initialOficios: Oficio[] = [
+  {
+    id: 'of-1',
+    oficioNo: 'OF-2024-001',
+    fechaEmision: '2024-08-01',
+    destinatarioNombre: 'Dr. Ricardo Morales',
+    destinatarioCargo: 'Director Médico',
+    destinatarioOrganizacion: 'Hospital General "La Salud"',
+    asunto: 'Solicitud de información sobre protocolos de emergencia',
+    cuerpo: `Estimado Dr. Morales,
+
+Por medio de la presente, me dirijo a usted con la finalidad de solicitar la amable colaboración de su dirección para proporcionar la documentación referente a los protocolos de actuación en situaciones de emergencia.
+
+Esta información es crucial para la revisión y actualización de nuestros propios manuales de procedimiento, en línea con las directrices de la norma ISO 9001:2015 y nuestro compromiso con la mejora continua de la calidad y seguridad del paciente.
+
+Agradezco de antemano su pronta respuesta y quedo a su disposición para cualquier aclaración o detalle adicional que requiera.
+
+Sin otro particular, reciba un cordial saludo.`,
+    firmante: 'Lic. Ana Fernández - Jefa de Calidad',
+    estado: 'Emitido',
+  },
+  {
+    id: 'of-2',
+    oficioNo: 'OF-2024-002',
+    fechaEmision: '2024-08-15',
+    destinatarioNombre: 'Ing. Laura López',
+    destinatarioCargo: 'Gerente de Mantenimiento',
+    destinatarioOrganizacion: 'Hospital General "La Salud"',
+    asunto: 'Reporte de mantenimiento preventivo de equipos biomédicos',
+    cuerpo: `Estimada Ing. López,
+
+Se hace referencia al programa de mantenimiento preventivo para el área de Quirófano. Le informo que se ha completado el mantenimiento programado para los equipos de anestesia y monitores de signos vitales, conforme a lo establecido en el Procedimiento IT-MT-005.
+
+Los trabajos se realizaron el día 10 de agosto del presente año, sin incidencias reportadas. Adjunto a este oficio, encontrará el informe detallado de las actividades realizadas y las observaciones pertinentes.
+
+Agradezco su gestión para asegurar la operatividad de nuestros equipos.
+
+Atentamente,`,
+    firmante: 'Ing. Carlos Robles - Jefe de Ingeniería Biomédica',
+    estado: 'Emitido',
+  },
+  {
+    id: 'of-3',
+    oficioNo: 'OF-2024-003',
+    fechaEmision: '2024-09-01',
+    destinatarioNombre: 'Comité de Ética e Investigación',
+    destinatarioCargo: 'Presidente del Comité',
+    destinatarioOrganizacion: 'Hospital General "La Salud"',
+    asunto: 'Convocatoria a sesión ordinaria',
+    cuerpo: `Por medio de la presente, se les convoca a la sesión ordinaria del Comité de Ética e Investigación, la cual se llevará a cabo el día 15 de septiembre de 2024, a las 10:00 AM, en la sala de juntas de Dirección.
+
+Los puntos a tratar en el orden del día incluyen la revisión de nuevos protocolos de investigación, seguimiento de proyectos en curso y asuntos generales. Se adjunta el orden del día detallado.
+
+Se ruega su puntual asistencia.
+
+Saludos cordiales,`,
+    firmante: 'Dra. Elena Sánchez - Secretaría del Comité',
+    estado: 'Borrador',
+  },
+];
+
+export const getNextOficioNumber = (currentOficios: Oficio[]): string => {
+    const currentYear = new Date().getFullYear();
+    const prefix = `OF-${currentYear}-`;
+    
+    const latestOficiosInYear = currentOficios.filter(o => o.oficioNo.startsWith(prefix));
+
+    if (latestOficiosInYear.length === 0) {
+        return `${prefix}001`;
+    }
+
+    const maxNum = latestOficiosInYear.reduce((max, oficio) => {
+        const numPart = parseInt(oficio.oficioNo.split('-')[2], 10);
+        return !isNaN(numPart) && numPart > max ? numPart : max;
+    }, 0);
+
+    return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+};
