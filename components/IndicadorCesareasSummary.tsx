@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import { RegistroNacimientosCesareas } from '../types';
 import { XIcon } from './icons/XIcon';
@@ -38,13 +39,13 @@ export const IndicadorCesareasSummary: React.FC<IndicadorCesareasSummaryProps> =
                 : 0;
         });
 
-        // FIX: Explicitly type the accumulator and initial value of the reduce function to ensure type safety when calculating totals.
-        const total = Object.values(turnos).reduce((acc: TurnoData, curr: TurnoData) => {
+        // FIX: Simplify the reduce function, allowing TypeScript to correctly infer types from the initial value.
+        const total = Object.values(turnos).reduce((acc, curr) => {
             acc.totalNacimientos += curr.totalNacimientos;
             acc.vaginales += curr.vaginales;
             acc.cesareas += curr.cesareas;
             return acc;
-        }, { totalNacimientos: 0, vaginales: 0, cesareas: 0, porcentaje: 0 } as TurnoData);
+        }, { totalNacimientos: 0, vaginales: 0, cesareas: 0, porcentaje: 0 });
 
         total.porcentaje = total.totalNacimientos > 0 
             ? (total.cesareas / total.totalNacimientos) * 100 

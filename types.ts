@@ -107,6 +107,9 @@ export interface Accion {
   responsable: string;
   fechaPrevista: string;
   completada: boolean;
+  evidencia?: string; // file name
+  evidenciaDataUrl?: string; // base64 data url for preview
+  evidenciaMimeType?: string; // e.g., 'application/pdf', 'image/jpeg'
 }
 
 export interface AccionCorrectiva {

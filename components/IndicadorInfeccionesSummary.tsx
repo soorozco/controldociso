@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import { RegistroInfeccionesNosocomiales } from '../types';
 import { XIcon } from './icons/XIcon';
@@ -13,7 +14,7 @@ const calculateRate = (casos: number, total: number) => {
     return ((casos / total) * 1000).toFixed(1);
 };
 
-// FIX: Define a specific type for the summary and explicitly type the accumulator in reduce to prevent properties from being inferred as 'unknown'.
+// FIX: Define a specific type for the summary data to ensure type safety.
 type AreaSummary = {
     bacteriemias: { casos: number; diasExposicion: number };
     neumonias: { casos: number; diasExposicion: number };
@@ -33,14 +34,18 @@ export const IndicadorInfeccionesSummary: React.FC<IndicadorInfeccionesSummaryPr
             totalInfecciones: 0,
         };
         
-        // FIX: Explicitly cast the initial value of reduce to ensure `result` is correctly typed. This prevents properties like 'totalInfecciones' from being inferred as 'unknown'.
+        // FIX: Explicitly type the accumulator and initialize new area objects correctly to avoid type errors.
         const result = registros.reduce((acc: Record<string, AreaSummary>, reg: RegistroInfeccionesNosocomiales) => {
             if (!acc[reg.area]) {
-                acc[reg.area] = JSON.parse(JSON.stringify(initial));
+                acc[reg.area] = {
+                    bacteriemias: { casos: 0, diasExposicion: 0 },
+                    neumonias: { casos: 0, diasExposicion: 0 },
+                    sitioQuirurgico: { casos: 0, procedimientos: 0 },
+                    viasUrinarias: { casos: 0, diasExposicion: 0 },
+                    totalInfecciones: 0,
+                };
             }
-            // FIX: Explicitly cast 'area' to ensure type safety, as the enum 'area' is implicitly string.
-            const areaKey: keyof typeof acc = reg.area;
-            const area = acc[areaKey];
+            const area = acc[reg.area];
             area.bacteriemias.casos += reg.bacteriemias.casos;
             area.bacteriemias.diasExposicion += reg.bacteriemias.diasExposicion;
             area.neumonias.casos += reg.neumonias.casos;

@@ -3,6 +3,8 @@ import { AccionCorrectiva, Accion } from '../types';
 import { XIcon } from './icons/XIcon';
 import { PlusIcon } from './icons/PlusIcon';
 import { TrashIcon } from './icons/TrashIcon';
+import { PaperClipIcon } from './icons/PaperClipIcon';
+import { EyeIcon } from './icons/EyeIcon';
 
 interface AccionCorrectivaModalProps {
     accion?: AccionCorrectiva;
@@ -66,10 +68,28 @@ export const AccionCorrectivaModal: React.FC<AccionCorrectivaModalProps> = ({ ac
         setFormData(prev => ({ ...prev, acciones: newActions }));
     };
 
+    const handleEvidenceChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (loadEvent) => {
+                const dataUrl = loadEvent.target?.result as string;
+                const newActions = [...formData.acciones];
+                const actionToUpdate = { ...newActions[index] };
+                actionToUpdate.evidencia = file.name;
+                actionToUpdate.evidenciaDataUrl = dataUrl;
+                actionToUpdate.evidenciaMimeType = file.type;
+                newActions[index] = actionToUpdate;
+                setFormData(prev => ({ ...prev, acciones: newActions }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const addAction = () => {
         setFormData(prev => ({
             ...prev,
-            acciones: [...prev.acciones, { descripcion: '', responsable: '', fechaPrevista: '', completada: false }]
+            acciones: [...prev.acciones, { descripcion: '', responsable: '', fechaPrevista: '', completada: false, evidencia: '', evidenciaDataUrl: '', evidenciaMimeType: '' }]
         }));
     };
 
@@ -129,7 +149,7 @@ export const AccionCorrectivaModal: React.FC<AccionCorrectivaModalProps> = ({ ac
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 pt-2 border-t border-gray-200 dark:border-gray-700">Plan de Acciones</h3>
                             {formData.acciones.map((action, index) => (
                                 <div key={index} className="grid grid-cols-12 gap-x-4 gap-y-2 items-start mb-3 p-3 border border-gray-200 dark:border-gray-600 rounded-md">
-                                    <div className="col-span-12 sm:col-span-5">
+                                    <div className="col-span-12 sm:col-span-4">
                                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">Descripción Acción</label>
                                         <input type="text" name="descripcion" value={action.descripcion} onChange={e => handleActionChange(index, e)} className="mt-1 block w-full text-sm rounded-md border-gray-300 dark:border-gray-500 shadow-sm sm:text-sm bg-white dark:bg-gray-700" required />
                                     </div>
@@ -141,15 +161,45 @@ export const AccionCorrectivaModal: React.FC<AccionCorrectivaModalProps> = ({ ac
                                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">Fecha Prevista</label>
                                         <input type="date" name="fechaPrevista" value={action.fechaPrevista} onChange={e => handleActionChange(index, e)} className="mt-1 block w-full text-sm rounded-md border-gray-300 dark:border-gray-500 shadow-sm sm:text-sm bg-white dark:bg-gray-700" required />
                                     </div>
-                                    <div className="col-span-10 sm:col-span-1 flex flex-col items-center justify-end h-full">
+                                    <div className="col-span-4 sm:col-span-1 flex flex-col items-center justify-end h-full">
                                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">Hecho</label>
                                         <input type="checkbox" name="completada" checked={action.completada} onChange={e => handleActionChange(index, e)} className="mt-2 h-4 w-4 text-blue-600 border-gray-300 rounded" />
                                     </div>
-                                    <div className="col-span-2 sm:col-span-1 flex items-end h-full">
+                                    <div className="col-span-8 sm:col-span-2 flex items-end justify-center h-full">
+                                        {action.evidenciaDataUrl && (
+                                            <button
+                                                type="button"
+                                                onClick={() => window.open(action.evidenciaDataUrl!)}
+                                                className="p-2 text-blue-500 hover:text-blue-700 dark:hover:text-blue-400"
+                                                title="Ver evidencia"
+                                            >
+                                                <EyeIcon className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.jpeg,.jpg,.png"
+                                            id={`evidence-upload-${index}`}
+                                            className="hidden"
+                                            onChange={(e) => handleEvidenceChange(index, e)}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => document.getElementById(`evidence-upload-${index}`)?.click()}
+                                            className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
+                                            title={action.evidencia || "Adjuntar evidencia"}
+                                        >
+                                            <PaperClipIcon className={`w-5 h-5 ${action.evidencia ? 'text-blue-500' : ''}`} />
+                                        </button>
                                         <button type="button" onClick={() => removeAction(index)} className="p-2 text-red-500 hover:text-red-700 dark:hover:text-red-400">
                                             <TrashIcon className="w-5 h-5" />
                                         </button>
                                     </div>
+                                     {action.evidencia && (
+                                        <div className="col-span-12 text-xs text-gray-500 dark:text-gray-400 truncate">
+                                            Evidencia: {action.evidencia}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             <button type="button" onClick={addAction} className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-400 dark:border-gray-500 text-sm font-semibold text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700">

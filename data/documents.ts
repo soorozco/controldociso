@@ -208,7 +208,7 @@ Acciones para tomar:
 export const initialOficios: Oficio[] = [
   {
     id: 'of-1',
-    oficioNo: 'OF-2024-001',
+    oficioNo: 'OFCAL-2024-001',
     fechaEmision: '2024-08-01',
     destinatarioNombre: 'Dr. Ricardo Morales',
     destinatarioCargo: 'Director Médico',
@@ -228,7 +228,7 @@ Sin otro particular, reciba un cordial saludo.`,
   },
   {
     id: 'of-2',
-    oficioNo: 'OF-2024-002',
+    oficioNo: 'OFCAL-2024-002',
     fechaEmision: '2024-08-15',
     destinatarioNombre: 'Ing. Laura López',
     destinatarioCargo: 'Gerente de Mantenimiento',
@@ -248,7 +248,7 @@ Atentamente,`,
   },
   {
     id: 'of-3',
-    oficioNo: 'OF-2024-003',
+    oficioNo: 'OFCAL-2024-003',
     fechaEmision: '2024-09-01',
     destinatarioNombre: 'Comité de Ética e Investigación',
     destinatarioCargo: 'Presidente del Comité',
@@ -268,7 +268,7 @@ Saludos cordiales,`,
 
 export const getNextOficioNumber = (currentOficios: Oficio[]): string => {
     const currentYear = new Date().getFullYear();
-    const prefix = `OF-${currentYear}-`;
+    const prefix = `OFCAL-${currentYear}-`;
     
     const latestOficiosInYear = currentOficios.filter(o => o.oficioNo.startsWith(prefix));
 

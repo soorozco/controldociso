@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import { RegistroEventoAdverso } from '../types';
 import { XIcon } from './icons/XIcon';
@@ -64,8 +65,8 @@ export const IndicadorEventosAdversosSummary: React.FC<IndicadorEventosAdversosS
         const incidenteTypeDistribution: Record<string, number> = {};
         let evitableCount = 0;
 
-        // FIX: Add explicit type to `reg` to ensure correct type inference within the loop, resolving arithmetic operation errors.
-        registros.forEach((reg: RegistroEventoAdverso) => {
+        // FIX: Rely on type inference for the forEach callback parameter to ensure its properties are correctly typed for arithmetic operations.
+        registros.forEach(reg => {
             gravedadDistribution[reg.gravedad] = (gravedadDistribution[reg.gravedad] || 0) + 1;
             incidenteTypeDistribution[reg.tipoincidente] = (incidenteTypeDistribution[reg.tipoincidente] || 0) + 1;
             if (reg.evitado === 'SI') {

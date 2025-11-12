@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import { RegistroTiempoEspera } from '../types';
 import { XIcon } from './icons/XIcon';
@@ -35,11 +36,11 @@ export const IndicadorTiempoEsperaSummary: React.FC<IndicadorTiempoEsperaSummary
         const avg = total > 0 ? Math.round(totalMinutos / total) : 0;
 
         const ranges: Record<string, number> = {
-            // FIX: Add explicit type to `r` to prevent type inference issues when `registros` is `any[]`. This resolves the arithmetic operation error.
-            '0-15 min': registros.filter((r: RegistroTiempoEspera) => r.minutosEspera >= 0 && r.minutosEspera <= 15).length,
-            '16-30 min': registros.filter((r: RegistroTiempoEspera) => r.minutosEspera >= 16 && r.minutosEspera <= 30).length,
-            '31-45 min': registros.filter((r: RegistroTiempoEspera) => r.minutosEspera >= 31 && r.minutosEspera <= 45).length,
-            '46+ min': registros.filter((r: RegistroTiempoEspera) => r.minutosEspera >= 46).length,
+            // FIX: Rely on type inference for the filter callback parameter to ensure its properties are correctly typed for arithmetic comparisons.
+            '0-15 min': registros.filter(r => r.minutosEspera >= 0 && r.minutosEspera <= 15).length,
+            '16-30 min': registros.filter(r => r.minutosEspera >= 16 && r.minutosEspera <= 30).length,
+            '31-45 min': registros.filter(r => r.minutosEspera >= 31 && r.minutosEspera <= 45).length,
+            '46+ min': registros.filter(r => r.minutosEspera >= 46).length,
         };
 
         return { min, max, avg, total, totalMinutos, ranges };
