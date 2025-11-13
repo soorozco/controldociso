@@ -1,6 +1,6 @@
 
-
 import { Documento, Formato, AccionCorrectiva, Revision, DocumentoExterno, Oficio } from '../types';
+import { areaCodes, getNextSequentialNumber } from './codingRules';
 
 export const initialDocuments: Documento[] = [
   {
@@ -116,7 +116,7 @@ export const initialDocumentosExternos: DocumentoExterno[] = [
 export const initialAcciones: AccionCorrectiva[] = [
   {
     id: 'ac-1',
-    codigo: 'AC-2024-001',
+    codigo: 'AC-CA-001',
     descripcion: 'No se está registrando la temperatura de la cámara frigorífica #3.',
     causaRaiz: 'El termómetro del equipo está descalibrado y el personal no fue re-entrenado en el procedimiento de verificación.',
     acciones: [
@@ -126,20 +126,22 @@ export const initialAcciones: AccionCorrectiva[] = [
     responsableApertura: 'A. López (Calidad)',
     fechaApertura: '2024-08-10',
     estado: 'En Proceso',
+    area: 'Calidad',
   },
   {
     id: 'ac-2',
-    codigo: 'AC-2023-025',
+    codigo: 'AC-AD-001',
     descripcion: 'Etiquetado incorrecto en lote de producción 23-11-B.',
     causaRaiz: 'Error humano al seleccionar la etiqueta en el sistema de impresión.',
     acciones: [
         { descripcion: 'Implementar sistema de escaneo de código de producto para seleccionar etiqueta.', responsable: 'L. Torres (Sistemas)', fechaPrevista: '2024-01-30', completada: true },
         { descripcion: 'Retirar y re-etiquetar lote afectado.', responsable: 'M. Gomez (Producción)', fechaPrevista: '2023-12-05', completada: true }
     ],
-    responsableApertura: 'C. Reyes (Logística)',
+    responsableApertura: 'C. Reyes (Administración)',
     fechaApertura: '2023-12-01',
     estado: 'Verificada',
-    fechaCierre: '2024-02-15'
+    fechaCierre: '2024-02-15',
+    area: 'Administración / Compras',
   }
 ];
 
@@ -270,16 +272,6 @@ export const getNextOficioNumber = (currentOficios: Oficio[]): string => {
     const currentYear = new Date().getFullYear();
     const prefix = `OFCAL-${currentYear}-`;
     
-    const latestOficiosInYear = currentOficios.filter(o => o.oficioNo.startsWith(prefix));
-
-    if (latestOficiosInYear.length === 0) {
-        return `${prefix}001`;
-    }
-
-    const maxNum = latestOficiosInYear.reduce((max, oficio) => {
-        const numPart = parseInt(oficio.oficioNo.split('-')[2], 10);
-        return !isNaN(numPart) && numPart > max ? numPart : max;
-    }, 0);
-
-    return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+    // FIX: Explicitly cast currentOficios to an array of objects with a 'codigo' property.
+    return `${prefix}${getNextSequentialNumber(prefix, currentOficios as { codigo: string }[])}`;
 };

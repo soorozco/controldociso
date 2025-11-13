@@ -26,11 +26,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ documents }) => {
     }, [documents]);
 
     const docsByArea = useMemo(() => {
-        // FIX: Use the generic form of reduce to ensure correct type inference for the accumulator.
-        return documents.reduce<Record<string, number>>((acc, doc) => {
+        // FIX: Explicitly cast the initial accumulator to `Record<string, number>` to ensure correct type inference.
+        // Also explicitly type `doc` in the reduce callback to Documento.
+        return documents.reduce<Record<string, number>>((acc, doc: Documento) => {
             acc[doc.area] = (acc[doc.area] || 0) + 1;
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
     }, [documents]);
 
     return (
@@ -48,7 +49,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ documents }) => {
                 <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Documentos por Área</h3>
                 <div className="mt-4">
                     <ul>
-                        {Object.entries(docsByArea).sort((a, b) => b[1] - a[1]).map(([area, count]) => (
+                        {/* FIX: Explicitly typed the entries for correct arithmetic comparison in sort. */}
+                        {Object.entries(docsByArea).sort((a: [string, number], b: [string, number]) => b[1] - a[1]).map(([area, count]) => (
                             <li key={area} className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
                                <span className="text-sm font-medium">{area}</span>
                                <span className="text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full">{count}</span>

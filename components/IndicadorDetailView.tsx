@@ -27,6 +27,8 @@ import { IndicadorEventosAdversosTable } from './IndicadorEventosAdversosTable';
 import { IndicadorEventosAdversosSummary } from './IndicadorEventosAdversosSummary'; // NEW
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { XCircleIcon } from './icons/XCircleIcon';
+import { EyeIcon } from './icons/EyeIcon'; // Import EyeIcon
+import { ViewCommentModal } from './ViewCommentModal'; // Import new comment modal
 
 
 interface IndicadorDetailViewProps {
@@ -292,7 +294,10 @@ const ScoreDot: React.FC<{ score: CalificacionSatisfaccion }> = ({ score }) => (
         <span className={`h-4 w-4 rounded-full ${scoreColorMap[score]}`} title={score}></span>
     </div>
 );
-const EncuestaSatisfaccionTable: React.FC<{ registros: RegistroEncuestaSatisfaccion[] }> = ({ registros }) => (
+const EncuestaSatisfaccionTable: React.FC<{ 
+    registros: RegistroEncuestaSatisfaccion[],
+    onViewComment: (comment: string) => void // New prop for viewing comments
+}> = ({ registros, onViewComment }) => (
     <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
         <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
@@ -302,6 +307,7 @@ const EncuestaSatisfaccionTable: React.FC<{ registros: RegistroEncuestaSatisfacc
                     <th key={i} scope="col" className="px-2 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100" title={`Pregunta ${i + 1}`}>{i + 1}</th>
                 ))}
                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Recomienda</th>
+                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Comentarios</th> {/* NEW COLUMN */}
             </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
@@ -321,6 +327,17 @@ const EncuestaSatisfaccionTable: React.FC<{ registros: RegistroEncuestaSatisfacc
                     <td><ScoreDot score={reg.servicioGeneral} /></td>
                     <td><ScoreDot score={reg.tramitesEgreso} /></td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300">{reg.recomendaria}</td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300 text-center">
+                        {reg.comentarios && reg.comentarios.trim().length > 0 && (
+                            <button
+                                onClick={() => onViewComment(reg.comentarios!)}
+                                className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200 p-1 rounded-full"
+                                aria-label="Ver comentario"
+                            >
+                                <EyeIcon className="w-5 h-5" />
+                            </button>
+                        )}
+                    </td>
                 </tr>
             ))}
         </tbody>
@@ -336,6 +353,10 @@ export const IndicadorDetailView: React.FC<IndicadorDetailViewProps> = ({ indica
     const [isSummaryOpen, setIsSummaryOpen] = useState(false);
     const [monthFilter, setMonthFilter] = useState('all');
     
+    // State for comment modal
+    const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+    const [currentComment, setCurrentComment] = useState('');
+
     // Updated to include new indicator 'ind-srea-01'
     const dateBasedIndicators = ['ind-te-02', 'ind-tde-02', 'ind-pcph-02', 'ind-mmvoe-02', 'ind-rcne-02', 'ind-vcvi-02', 'ind-es-01', 'ind-srea-01'];
 
@@ -415,6 +436,11 @@ export const IndicadorDetailView: React.FC<IndicadorDetailViewProps> = ({ indica
         onSave(newRegistros);
         setIsFormOpen(false);
     }
+
+    const handleViewComment = (comment: string) => {
+        setCurrentComment(comment);
+        setIsCommentModalOpen(true);
+    };
     
     return (
         <div>
@@ -463,7 +489,7 @@ export const IndicadorDetailView: React.FC<IndicadorDetailViewProps> = ({ indica
                            {indicador.id === 'ind-mmvoe-02' && <MinistracionMedicamentosTable registros={filteredRegistros as RegistroMinistracionMedicamentos[]} />}
                            {indicador.id === 'ind-rcne-02' && <RegistroClinicoTable registros={filteredRegistros as RegistroClinicoNotasEnfermeria[]} />}
                            {indicador.id === 'ind-vcvi-02' && <VenoclisisInstaladaTable registros={filteredRegistros as RegistroVenoclisisInstalada[]} />}
-                           {indicador.id === 'ind-es-01' && <EncuestaSatisfaccionTable registros={filteredRegistros as RegistroEncuestaSatisfaccion[]} />}
+                           {indicador.id === 'ind-es-01' && <EncuestaSatisfaccionTable registros={filteredRegistros as RegistroEncuestaSatisfaccion[]} onViewComment={handleViewComment} />}
                            {indicador.id === 'ind-srea-01' && <IndicadorEventosAdversosTable registros={filteredRegistros as RegistroEventoAdverso[]} />} {/* NEW */}
                         </div>
                     </div>
@@ -531,6 +557,13 @@ export const IndicadorDetailView: React.FC<IndicadorDetailViewProps> = ({ indica
             )}
             {isSummaryOpen && indicador.id === 'ind-srea-01' && ( // NEW
                 <IndicadorEventosAdversosSummary onClose={() => setIsSummaryOpen(false)} registros={filteredRegistros as RegistroEventoAdverso[]} />
+            )}
+
+            {isCommentModalOpen && (
+                <ViewCommentModal 
+                    comment={currentComment}
+                    onClose={() => setIsCommentModalOpen(false)}
+                />
             )}
         </div>
     );

@@ -1,6 +1,5 @@
 
 
-
 import React, { useState } from 'react';
 import { Documento, Formato, JsonImportData, AccionCorrectiva, Revision, IndicadorCategoria, DocumentoExterno, Auditoria, HallazgoAuditoria, Oficio } from './types';
 import { initialDocuments, initialFormats, initialAcciones, initialRevisiones, initialDocumentosExternos, initialOficios } from './data/documents';
@@ -14,6 +13,7 @@ import { IndicadoresPage } from './components/IndicadoresPage';
 import { AuditoriasPage } from './components/AuditoriasPage';
 import { HerramientasPage } from './components/HerramientasPage';
 import { OficiosPage } from './components/OficiosPage';
+import { getNextAccionCorrectivaCode, areaCodes } from './data/codingRules';
 
 
 const App: React.FC = () => {
@@ -113,15 +113,28 @@ const App: React.FC = () => {
     };
 
     const handleGenerateAccionFromHallazgo = (hallazgo: HallazgoAuditoria, auditoriaId: string) => {
+        // Need to determine the area for the new action based on the audited area.
+        const actionArea = hallazgo.areaAuditada; // Assuming areaAuditada matches an area in areaCodes
+        
+        // Ensure the area code exists, if not, use a fallback.
+        const areaCodeExists = Object.keys(areaCodes).includes(actionArea);
+        if (!areaCodeExists) {
+            alert(`Error: Área de auditoría "${actionArea}" no reconocida para generar el código de acción.`);
+            console.warn(`Area "${actionArea}" not found in areaCodes for generating action.`);
+        }
+
+        const newAccionId = `ac-${Date.now()}`;
         const newAccion: AccionCorrectiva = {
-            id: `ac-${Date.now()}`,
-            codigo: `AC-${new Date().getFullYear()}-${String(acciones.length + 1).padStart(3, '0')}`,
+            id: newAccionId,
+            // Generate the code here, as the action is being created
+            codigo: getNextAccionCorrectivaCode(actionArea, acciones), // Use `acciones` as `allAcciones`
             descripcion: `Derivada de auditoría (Hallazgo: ${hallazgo.id}): ${hallazgo.descripcion}`,
             causaRaiz: '',
             acciones: [],
             responsableApertura: hallazgo.auditorResponsable,
             fechaApertura: new Date().toISOString().split('T')[0],
             estado: 'Abierta',
+            area: actionArea, 
         };
 
         handleSaveAccion(newAccion);
@@ -183,7 +196,7 @@ const App: React.FC = () => {
                             onSaveDocumentoExterno={handleSaveDocumentoExterno}
                         />;
             case 'Acciones Correctivas':
-                return <AccionesCorrectivasPage acciones={acciones} onSave={handleSaveAccion} />;
+                return <AccionesCorrectivasPage acciones={acciones} onSave={handleSaveAccion} allAcciones={acciones} />;
             case 'Revisiones por la Dirección':
                 return <RevisionesPage revisiones={revisiones} onSave={handleSaveRevision} />;
             case 'Indicadores':

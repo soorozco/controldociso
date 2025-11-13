@@ -122,6 +122,7 @@ export interface AccionCorrectiva {
   fechaApertura: string; // YYYY-MM-DD
   estado: 'Abierta' | 'En Proceso' | 'Cerrada' | 'Verificada';
   fechaCierre?: string; // YYYY-MM-DD
+  area: string; // NEW: Area where the action originated/is managed
 }
 
 export interface Revision {

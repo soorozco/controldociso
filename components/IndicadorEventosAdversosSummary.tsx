@@ -65,8 +65,8 @@ export const IndicadorEventosAdversosSummary: React.FC<IndicadorEventosAdversosS
         const incidenteTypeDistribution: Record<string, number> = {};
         let evitableCount = 0;
 
-        // FIX: Rely on type inference for the forEach callback parameter to ensure its properties are correctly typed for arithmetic operations.
-        registros.forEach(reg => {
+        // FIX: Explicitly type `reg` in the forEach callback parameter to `RegistroEventoAdverso`.
+        registros.forEach((reg: RegistroEventoAdverso) => {
             gravedadDistribution[reg.gravedad] = (gravedadDistribution[reg.gravedad] || 0) + 1;
             incidenteTypeDistribution[reg.tipoincidente] = (incidenteTypeDistribution[reg.tipoincidente] || 0) + 1;
             if (reg.evitado === 'SI') {
@@ -112,9 +112,9 @@ export const IndicadorEventosAdversosSummary: React.FC<IndicadorEventosAdversosS
                                         <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-6">
                                             <div
                                                 className={`${getGravedadColor(gravedadKey)} h-6 rounded-full flex items-center justify-end px-2 text-white text-xs font-bold`}
-                                                style={{ width: `${(count / summary.totalRegistros) * 100}%` }} 
+                                                style={{ width: `${(count as number / summary.totalRegistros) * 100}%` }} 
                                             >
-                                                {count} ({( (count / summary.totalRegistros) * 100).toFixed(1)}%)
+                                                {count} ({((count as number / summary.totalRegistros) * 100).toFixed(1)}%)
                                             </div>
                                         </div>
                                     </div>
@@ -134,9 +134,9 @@ export const IndicadorEventosAdversosSummary: React.FC<IndicadorEventosAdversosS
                                         <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-6">
                                             <div
                                                 className="bg-blue-600 h-6 rounded-full flex items-center justify-end px-2 text-white text-xs font-bold"
-                                                style={{ width: `${(count / summary.totalRegistros) * 100}%` }}
+                                                style={{ width: `${(count as number / summary.totalRegistros) * 100}%` }}
                                             >
-                                                {count} ({( (count / summary.totalRegistros) * 100).toFixed(1)}%)
+                                                {count} ({((count as number / summary.totalRegistros) * 100).toFixed(1)}%)
                                             </div>
                                         </div>
                                     </div>
@@ -175,11 +175,11 @@ export const IndicadorEventosAdversosSummary: React.FC<IndicadorEventosAdversosS
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className="text-2xl font-bold text-gray-800 dark:text-white">{summary.evitablePercentage.toFixed(0)}%</span>
+                                        <span className="2xl font-bold text-gray-800 dark:text-white">{summary.evitablePercentage.toFixed(0)}%</span>
                                     </div>
                                 </div>
                                 <div className="text-sm">
-                                    <p><span className="font-bold">{(summary.evitablePercentage / 100 * summary.totalRegistros).toFixed(0)} de {summary.totalRegistros}</span> eventos pudieron haberse evitado.</p>
+                                    <p><span className="font-bold">{((summary.evitablePercentage as number / 100) * summary.totalRegistros).toFixed(0)} de {summary.totalRegistros}</span> eventos pudieron haberse evitado.</p>
                                 </div>
                             </div>
                         )}

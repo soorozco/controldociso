@@ -5,11 +5,15 @@ import { PlusIcon } from './icons/PlusIcon';
 import { TrashIcon } from './icons/TrashIcon';
 import { PaperClipIcon } from './icons/PaperClipIcon';
 import { EyeIcon } from './icons/EyeIcon';
+import { areaCodes, getNextAccionCorrectivaCode } from '../data/codingRules';
+
 
 interface AccionCorrectivaModalProps {
     accion?: AccionCorrectiva;
     onClose: () => void;
     onSave: (accion: AccionCorrectiva) => void;
+    allAcciones: AccionCorrectiva[]; // For code generation
+    availableAreas: string[]; // For area dropdown options
 }
 
 const emptyAccion: Omit<AccionCorrectiva, 'id' | 'codigo'> = {
@@ -19,35 +23,58 @@ const emptyAccion: Omit<AccionCorrectiva, 'id' | 'codigo'> = {
     responsableApertura: '',
     fechaApertura: new Date().toISOString().split('T')[0],
     estado: 'Abierta',
+    area: '', // NEW: Default empty, will be selected
 };
 
-export const AccionCorrectivaModal: React.FC<AccionCorrectivaModalProps> = ({ accion, onClose, onSave }) => {
+export const AccionCorrectivaModal: React.FC<AccionCorrectivaModalProps> = ({ accion, onClose, onSave, allAcciones, availableAreas }) => {
     const [formData, setFormData] = useState<AccionCorrectiva>(() => 
         accion || { 
             ...emptyAccion, 
             id: `ac-${Date.now()}`, 
-            codigo: `AC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`
+            codigo: '' // Will be generated based on area
         }
     );
     const isEditing = !!accion;
+    const [isCodeManuallyEdited, setIsCodeManuallyEdited] = useState(false);
 
     useEffect(() => {
         if (accion) {
             setFormData(accion);
+            // If editing, assume code might be custom or already set
+            setIsCodeManuallyEdited(true); 
         } else {
             setFormData({
                 ...emptyAccion,
                 id: `ac-${Date.now()}`,
-                // A better code generation logic would be needed in a real app
-                codigo: `AC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`
+                codigo: '', // Cleared, will be generated
             });
+            setIsCodeManuallyEdited(false); // New action, code will be auto-generated
         }
     }, [accion]);
 
+    useEffect(() => {
+        // Generate code only if not editing an existing action, an area is selected, and it hasn't been manually edited.
+        if (!isEditing && !isCodeManuallyEdited && formData.area) {
+            const newCode = getNextAccionCorrectivaCode(formData.area, allAcciones);
+            setFormData(prev => ({ ...prev, codigo: newCode }));
+        }
+    }, [formData.area, isEditing, isCodeManuallyEdited, allAcciones]);
+
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+        if (name === 'area' && !isEditing) { // Only reset for new actions, not when editing
+            setIsCodeManuallyEdited(false); // Reset when area changes via select for new actions
+        }
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+    
+    // Allow manual code entry for editing, but ensure new actions generate automatically
+    const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setIsCodeManuallyEdited(true);
+        handleChange(e);
+    };
+
 
     const handleActionChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -124,6 +151,22 @@ export const AccionCorrectivaModal: React.FC<AccionCorrectivaModalProps> = ({ ac
                             <label htmlFor="causaRaiz" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Análisis de Causa Raíz</label>
                             <textarea name="causaRaiz" id="causaRaiz" value={formData.causaRaiz} onChange={handleChange} rows={3} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required></textarea>
                         </div>
+                        
+                        {/* New fields for Area and Code */}
+                        <div>
+                            <label htmlFor="area" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Área Responsable</label>
+                            <select name="area" id="area" value={formData.area} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required>
+                                <option value="">Seleccione un área</option>
+                                {availableAreas.map(area => (
+                                    <option key={area} value={area}>{area}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="codigo" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Código</label>
+                            <input type="text" name="codigo" id="codigo" value={formData.codigo} onChange={handleCodeChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" readOnly={!isEditing && !!formData.area && !isCodeManuallyEdited} />
+                        </div>
+
                         <div>
                             <label htmlFor="responsableApertura" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Responsable Apertura</label>
                             <input type="text" name="responsableApertura" id="responsableApertura" value={formData.responsableApertura} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required />

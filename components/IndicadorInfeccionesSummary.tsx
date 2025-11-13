@@ -1,5 +1,4 @@
 
-
 import React, { useMemo } from 'react';
 import { RegistroInfeccionesNosocomiales } from '../types';
 import { XIcon } from './icons/XIcon';
@@ -26,14 +25,6 @@ type AreaSummary = {
 export const IndicadorInfeccionesSummary: React.FC<IndicadorInfeccionesSummaryProps> = ({ onClose, registros }) => {
     
     const summaryByArea = useMemo(() => {
-        const initial: AreaSummary = {
-            bacteriemias: { casos: 0, diasExposicion: 0 },
-            neumonias: { casos: 0, diasExposicion: 0 },
-            sitioQuirurgico: { casos: 0, procedimientos: 0 },
-            viasUrinarias: { casos: 0, diasExposicion: 0 },
-            totalInfecciones: 0,
-        };
-        
         // FIX: Explicitly type the accumulator and initialize new area objects correctly to avoid type errors.
         const result = registros.reduce((acc: Record<string, AreaSummary>, reg: RegistroInfeccionesNosocomiales) => {
             if (!acc[reg.area]) {
@@ -62,7 +53,8 @@ export const IndicadorInfeccionesSummary: React.FC<IndicadorInfeccionesSummaryPr
 
     }, [registros]);
 
-    const chartData = Object.entries(summaryByArea).map(([area, data]) => ({
+    // FIX: Explicitly type `data` parameter as `AreaSummary` to correctly access `totalInfecciones`.
+    const chartData = Object.entries(summaryByArea).map(([area, data]: [string, AreaSummary]) => ({
         area,
         count: data.totalInfecciones
     }));
@@ -93,7 +85,8 @@ export const IndicadorInfeccionesSummary: React.FC<IndicadorInfeccionesSummaryPr
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {Object.entries(summaryByArea).map(([area, data]) => (
+                                    {/* FIX: Explicitly type `data` as `AreaSummary` to resolve type errors */}
+                                    {Object.entries(summaryByArea).map(([area, data]: [string, AreaSummary]) => (
                                         <tr key={area}>
                                             <td className="p-2 font-semibold text-gray-800 dark:text-gray-200">{area}</td>
                                             <td className="p-2 text-center">{calculateRate(data.bacteriemias.casos, data.bacteriemias.diasExposicion)}</td>

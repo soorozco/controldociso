@@ -36,11 +36,11 @@ export const IndicadorTiempoEsperaSummary: React.FC<IndicadorTiempoEsperaSummary
         const avg = total > 0 ? Math.round(totalMinutos / total) : 0;
 
         const ranges: Record<string, number> = {
-            // FIX: Rely on type inference for the filter callback parameter to ensure its properties are correctly typed for arithmetic comparisons.
-            '0-15 min': registros.filter(r => r.minutosEspera >= 0 && r.minutosEspera <= 15).length,
-            '16-30 min': registros.filter(r => r.minutosEspera >= 16 && r.minutosEspera <= 30).length,
-            '31-45 min': registros.filter(r => r.minutosEspera >= 31 && r.minutosEspera <= 45).length,
-            '46+ min': registros.filter(r => r.minutosEspera >= 46).length,
+            // FIX: Explicitly type the filter callback parameter `r` to `RegistroTiempoEspera`.
+            '0-15 min': registros.filter((r: RegistroTiempoEspera) => (r.minutosEspera as number) >= 0 && (r.minutosEspera as number) <= 15).length,
+            '16-30 min': registros.filter((r: RegistroTiempoEspera) => (r.minutosEspera as number) >= 16 && (r.minutosEspera as number) <= 30).length,
+            '31-45 min': registros.filter((r: RegistroTiempoEspera) => (r.minutosEspera as number) >= 31 && (r.minutosEspera as number) <= 45).length,
+            '46+ min': registros.filter((r: RegistroTiempoEspera) => (r.minutosEspera as number) >= 46).length,
         };
 
         return { min, max, avg, total, totalMinutos, ranges };

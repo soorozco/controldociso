@@ -1,4 +1,4 @@
-import { Documento, Formato } from '../types';
+import { Documento, Formato, AccionCorrectiva } from '../types';
 
 export const areaCodes: Record<string, string> = {
     'Dirección General': 'DG',
@@ -27,6 +27,7 @@ export const areaCodes: Record<string, string> = {
     'Calidad': 'CA',
     'Dirección': 'DG',
     'Producción': 'PD', // Using PD for producción
+    'Logística': 'LO', // Added Logística
 };
 
 export const docTypeCodes: Record<string, string> = {
@@ -42,17 +43,45 @@ export const docTypeCodes: Record<string, string> = {
     'Formato': 'FT'
 };
 
-export const getNextSequentialNumber = (
+// New codes for action types (used for AccionCorrectiva)
+export const accionPrefixCodes: Record<string, string> = {
+    'Acción Correctiva': 'AC',
+    'Acción Preventiva': 'AP', // For future use if preventive actions are added
+};
+
+export const getNextSequentialNumber = <T extends { codigo: string }>(
     prefix: string, 
-    allDocs: (Documento | Formato)[]
+    items: T[]
 ): string => {
-    const relevantDocs = allDocs.filter(d => d.codigo.startsWith(prefix));
-    if (relevantDocs.length === 0) {
-        return '01';
+    const relevantItems = items.filter(item => item.codigo.startsWith(prefix));
+    if (relevantItems.length === 0) {
+        return '001';
     }
-    const maxNum = relevantDocs.reduce((max, doc) => {
-        const numPart = parseInt(doc.codigo.split('-')[2], 10);
-        return !isNaN(numPart) && numPart > max ? numPart : max;
+    const maxNum = relevantItems.reduce((max, item) => {
+        const parts = item.codigo.split('-');
+        // Ensure the third part exists and is a number (e.g., AC-AREA-NNN)
+        if (parts.length > 2) {
+            const numPart = parseInt(parts[2], 10);
+            return !isNaN(numPart) && numPart > max ? numPart : max;
+        }
+        return max;
     }, 0);
-    return String(maxNum + 1).padStart(2, '0');
+    return String(maxNum + 1).padStart(3, '0');
+};
+
+export const getNextAccionCorrectivaCode = (
+    area: string,
+    allAcciones: AccionCorrectiva[]
+): string => {
+    const accionTypeCode = accionPrefixCodes['Acción Correctiva']; // Always 'AC' for now
+    const areaCode = areaCodes[area];
+
+    if (!accionTypeCode || !areaCode) {
+        console.warn(`Could not generate action code: Missing type code for 'Acción Correctiva' or area code for '${area}'`);
+        return `AC-${areaCode || 'XX'}-XXX`; // Fallback code
+    }
+
+    const prefix = `${accionTypeCode}-${areaCode}-`;
+    const nextNum = getNextSequentialNumber(prefix, allAcciones); // Use generic helper
+    return `${prefix}${nextNum}`;
 };

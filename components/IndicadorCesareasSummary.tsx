@@ -39,8 +39,8 @@ export const IndicadorCesareasSummary: React.FC<IndicadorCesareasSummaryProps> =
                 : 0;
         });
 
-        // FIX: Simplify the reduce function, allowing TypeScript to correctly infer types from the initial value.
-        const total = Object.values(turnos).reduce((acc, curr) => {
+        // FIX: Explicitly type `acc` and `curr` in the reduce function to ensure correct type inference for arithmetic operations.
+        const total = Object.values(turnos).reduce((acc: TurnoData, curr: TurnoData) => {
             acc.totalNacimientos += curr.totalNacimientos;
             acc.vaginales += curr.vaginales;
             acc.cesareas += curr.cesareas;
